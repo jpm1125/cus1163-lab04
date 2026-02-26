@@ -1,0 +1,69 @@
+Lab 4: Simple Command Executor - Submission
+
+=== ASSIGNMENT COMPLETION ===
+
+✓ Implemented execute_command() function with fork-exec-wait pattern
+✓ Completed all 3 TODO sections:
+  - TODO 1: Fork child process with error handling
+  - TODO 2: Child process executes command using execvp()
+  - TODO 3: Parent waits for child and returns exit status
+✓ Code compiles successfully with: gcc -o lab4 main.c executor.c
+✓ Program tested with multiple commands (ls, pwd, echo, invalid commands)
+
+=== ANALYSIS QUESTIONS ===
+
+1. What happens to the child's memory when exec() is called?
+When exec() is called, the child process's entire memory space is replaced with the new program. The original program code, data, heap, and stack are completely overwritten with the new program's memory image. Only the process ID and some process attributes are preserved.
+
+2. Why do we need both fork() and exec()? Why not one system call?
+We need both because they serve different purposes:
+- fork() creates a new process (duplicate of parent)
+- exec() transforms a process into a different program
+This separation allows flexibility: the parent can set up the child's environment, file descriptors, etc. before the exec(). A combined call would be less flexible and couldn't handle cases where you want to fork without exec or need to do setup between fork and exec.
+
+3. What happens if you call exec() in the parent process instead of the child?
+If you call exec() in the parent process, the parent itself transforms into the new program and loses its original identity. The parent would no longer be able to wait for the child or continue its original execution flow. This would break the shell functionality since the shell itself would become the executed command.
+
+4. Why must the child call exit() instead of return after a failed exec()?
+After a failed exec(), the child must call exit(1) instead of return because:
+- return would return control to the parent's code, creating two processes executing the same parent code
+- This would duplicate the parent's execution flow
+- exit(1) terminates the child process entirely, which is the correct behavior when exec() fails
+- Using return could lead to unexpected behavior and resource issues
+
+=== TESTING RESULTS ===
+
+Basic commands tested:
+✓ ls - Shows directory contents, exit status 0
+✓ pwd - Shows current directory, exit status 0
+✓ echo Hello World - Displays text, exit status 0
+✓ date - Shows current date/time, exit status 0
+
+Commands with arguments:
+✓ ls -l - Shows detailed directory listing, exit status 0
+
+Error handling:
+✓ invalidcommand - Shows "execvp: No such file or directory", exit status 1
+
+=== SELF-ASSESSMENT ===
+
+Comfortability score [0 to 5]: 5
+- Very comfortable with the fork-exec-wait pattern
+- Understanding of system calls is solid
+- No major difficulties encountered
+
+Completeness score [0 to 5]: 5
+- All TODOs completed correctly
+- All analysis questions answered thoroughly
+- Code compiles and runs without errors
+- Comprehensive testing performed
+
+A win: Successfully implemented the core Unix process management pattern that underlies how all shells work. The clean separation of fork/exec responsibilities and proper error handling made the implementation robust and educational.
+
+=== TECHNICAL NOTES ===
+
+- Code follows proper C conventions and error handling
+- Used perror() for system call error reporting
+- Proper use of WIFEXITED() and WEXITSTATUS() macros
+- Child process correctly calls exit(1) on exec failure
+- Parent properly waits for specific child with waitpid()
